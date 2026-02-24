@@ -29,7 +29,7 @@ services:
     ports:
       - "9090:9090"
 
-  ewm-main-service:
+  ewm-service:
     build: ./main
     container_name: ewm-main-service
     depends_on:
