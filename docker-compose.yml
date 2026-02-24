@@ -1,5 +1,16 @@
 version: '3.8'
 services:
+
+  main-db:
+    image: postgres:16-alpine
+    container_name: main-db
+    environment:
+      POSTGRES_DB: ewm
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+
   stats-db:
     image: postgres:15-alpine
     container_name: stats-db
@@ -17,9 +28,12 @@ services:
       - stats-db
     ports:
       - "9090:9090"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/ewm-stats
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SERVER_PORT: 9090
+
+  ewm-main-service:
+    build: ./main
+    container_name: ewm-main-service
+    depends_on:
+      - main-db
+      - stats-server
+    ports:
+      - "8080:8080"
