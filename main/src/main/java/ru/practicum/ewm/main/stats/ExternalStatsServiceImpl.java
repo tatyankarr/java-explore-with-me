@@ -34,24 +34,28 @@ public class ExternalStatsServiceImpl implements ExternalStatsService {
 
     @Override
     public Map<String, Long> getViews(List<String> uris) {
+        try {
+            ResponseEntity<List<ViewStats>> response = statsClient.getStats(
+                    LocalDateTime.of(2000, 1, 1, 0, 0),
+                    LocalDateTime.now(),
+                    uris,
+                    true
+            );
 
-        ResponseEntity<Object> response = statsClient.getStats(
-                LocalDateTime.of(2000, 1, 1, 0, 0),
-                LocalDateTime.now(),
-                uris,
-                true
-        );
+            List<ViewStats> stats = response.getBody();
 
-        List<ViewStats> stats = (List<ViewStats>) response.getBody();
+            if (stats == null || stats.isEmpty()) {
+                return Collections.emptyMap();
+            }
 
-        if (stats == null) {
+            return stats.stream()
+                    .collect(Collectors.toMap(
+                            ViewStats::getUri,
+                            ViewStats::getHits
+                    ));
+
+        } catch (Exception e) {
             return Collections.emptyMap();
         }
-
-        return stats.stream()
-                .collect(Collectors.toMap(
-                        ViewStats::getUri,
-                        ViewStats::getHits
-                ));
     }
 }

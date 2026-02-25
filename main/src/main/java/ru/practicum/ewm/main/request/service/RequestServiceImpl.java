@@ -19,6 +19,7 @@ import ru.practicum.ewm.main.user.User;
 import ru.practicum.ewm.main.user.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,20 +63,27 @@ public class RequestServiceImpl implements RequestService {
             throw new ConflictException("Request already exists");
         }
 
-        long confirmedCount =
-                requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
-
-        if (event.getParticipantLimit() > 0 &&
-                confirmedCount >= event.getParticipantLimit()) {
-            throw new ConflictException("Participant limit reached");
-        }
-
         RequestStatus status;
 
-        if (event.getRequestModeration()) {
-            status = RequestStatus.PENDING;
-        } else {
+        if (event.getParticipantLimit() == 0) {
+
             status = RequestStatus.CONFIRMED;
+
+        } else if (!event.getRequestModeration()) {
+
+            long confirmedCount =
+                    requestRepository.countByEventIdAndStatus(
+                            eventId,
+                            RequestStatus.CONFIRMED
+                    );
+
+            if (confirmedCount >= event.getParticipantLimit()) {
+                throw new ConflictException("Participant limit reached");
+            }
+            status = RequestStatus.CONFIRMED;
+
+        } else {
+            status = RequestStatus.PENDING;
         }
 
         ParticipationRequest request = ParticipationRequest.builder()
@@ -85,8 +93,9 @@ public class RequestServiceImpl implements RequestService {
                 .created(LocalDateTime.now())
                 .build();
 
-        return RequestMapper.toParticipationRequestDto(
-                requestRepository.save(request));
+        ParticipationRequest saved = requestRepository.save(request);
+
+        return RequestMapper.toParticipationRequestDto(saved);
     }
 
     @Override
@@ -138,33 +147,38 @@ public class RequestServiceImpl implements RequestService {
         List<ParticipationRequest> requests =
                 requestRepository.findAllByIdIn(updateRequest.getRequestIds());
 
+        for (ParticipationRequest request : requests) {
+            if (!request.getEvent().getId().equals(eventId)) {
+                throw new ConflictException("Request not for this event");
+            }
+            if (!request.getStatus().equals(RequestStatus.PENDING)) {
+                throw new ConflictException("Request must be in PENDING state");
+            }
+        }
+
         long confirmedCount =
                 requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
+        long participantLimit = event.getParticipantLimit();
 
         List<ParticipationRequestDto> confirmed = new java.util.ArrayList<>();
         List<ParticipationRequestDto> rejected = new java.util.ArrayList<>();
 
-        for (ParticipationRequest request : requests) {
+        if (updateRequest.getStatus() == RequestStatus.CONFIRMED) {
+            // Сортируем по дате создания
+            requests.sort(Comparator.comparing(ParticipationRequest::getCreated));
 
-            if (!request.getStatus().equals(RequestStatus.PENDING)) {
-                continue;
-            }
-
-            if (updateRequest.getStatus() == RequestStatus.CONFIRMED) {
-
-                if (event.getParticipantLimit() > 0 &&
-                        confirmedCount >= event.getParticipantLimit()) {
-
+            for (ParticipationRequest request : requests) {
+                if (participantLimit > 0 && confirmedCount >= participantLimit) {
                     request.setStatus(RequestStatus.REJECTED);
                     rejected.add(RequestMapper.toParticipationRequestDto(request));
-
                 } else {
                     request.setStatus(RequestStatus.CONFIRMED);
                     confirmedCount++;
                     confirmed.add(RequestMapper.toParticipationRequestDto(request));
                 }
-
-            } else {
+            }
+        } else {
+            for (ParticipationRequest request : requests) {
                 request.setStatus(RequestStatus.REJECTED);
                 rejected.add(RequestMapper.toParticipationRequestDto(request));
             }

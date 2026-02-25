@@ -22,7 +22,7 @@ public class Event {
     private Long id;
 
     @NotBlank
-    @Column(nullable = false)
+    @Column(nullable = false, length = 2000)
     private String annotation;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -30,7 +30,7 @@ public class Event {
     private Category category;
 
     @NotBlank
-    @Column(nullable = false)
+    @Column(nullable = false, length = 7000)
     private String description;
 
     @Column(name = "event_date", nullable = false)
@@ -54,11 +54,11 @@ public class Event {
     private Boolean requestModeration;
 
     @NotBlank
-    @Column(nullable = false)
+    @Column(nullable = false, length = 120)
     private String title;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private EventState state;
 
     @Column(name = "created_on", nullable = false)

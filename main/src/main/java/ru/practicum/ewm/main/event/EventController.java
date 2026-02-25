@@ -10,8 +10,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.main.event.dto.*;
 import ru.practicum.ewm.main.event.service.EventService;
+import ru.practicum.ewm.main.exception.BadRequestException;
 import ru.practicum.ewm.main.stats.ExternalStatsService;
+import ru.practicum.ewm.main.util.Constants;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -73,9 +76,18 @@ public class EventController {
                                                @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
                                                @RequestParam(defaultValue = "10") @Positive Integer size,
                                                HttpServletRequest request) {
-        statsService.logHit(request);
-        return eventService.getEventsPublic(text, categories, paid, rangeStart, rangeEnd,
-                onlyAvailable, sort, from, size);
+
+        if (rangeStart != null && rangeEnd != null) {
+            LocalDateTime start = LocalDateTime.parse(rangeStart, Constants.FORMATTER);
+            LocalDateTime end = LocalDateTime.parse(rangeEnd, Constants.FORMATTER);
+
+            if (start.isAfter(end)) {
+                throw new BadRequestException("Start date must be before end date");
+            }
+        }
+
+        return eventService.getEventsPublic(text, categories, paid, rangeStart,
+                rangeEnd, onlyAvailable, sort, from, size);
     }
 
     @GetMapping("/events/{id}")

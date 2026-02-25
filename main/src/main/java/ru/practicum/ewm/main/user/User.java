@@ -18,11 +18,11 @@ public class User {
     private Long id;
 
     @NotBlank
-    @Column(nullable = false)
+    @Column(nullable = false, length = 250)
     private String name;
 
     @NotBlank
     @Email
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, length = 254)
     private String email;
 }

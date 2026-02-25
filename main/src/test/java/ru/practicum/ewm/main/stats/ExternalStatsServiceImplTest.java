@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import ru.practicum.ewm.stats.client.StatsClient;
 import ru.practicum.ewm.stats.dto.EndpointHitDto;
@@ -75,7 +76,7 @@ class ExternalStatsServiceImplTest {
                 new ViewStats("ewm-main-service", "/events/1", 10L),
                 new ViewStats("ewm-main-service", "/events/2", 5L)
         );
-        ResponseEntity<Object> response = ResponseEntity.ok(viewStatsList);
+        ResponseEntity<List<ViewStats>> response = ResponseEntity.ok(viewStatsList);
 
         when(statsClient.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
                 eq(List.of("/events/1", "/events/2")), eq(true)))
@@ -90,7 +91,7 @@ class ExternalStatsServiceImplTest {
 
     @Test
     void getViews_ShouldReturnEmptyMap_WhenResponseBodyIsNull() {
-        ResponseEntity<Object> response = ResponseEntity.ok(null);
+        ResponseEntity<List<ViewStats>> response = ResponseEntity.ok(null);
 
         when(statsClient.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
                 anyList(), eq(true)))
@@ -104,7 +105,7 @@ class ExternalStatsServiceImplTest {
     @Test
     void getViews_ShouldReturnEmptyMap_WhenStatsListIsEmpty() {
         List<ViewStats> viewStatsList = List.of();
-        ResponseEntity<Object> response = ResponseEntity.ok(viewStatsList);
+        ResponseEntity<List<ViewStats>> response = ResponseEntity.ok(viewStatsList);
 
         when(statsClient.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
                 anyList(), eq(true)))
@@ -118,10 +119,10 @@ class ExternalStatsServiceImplTest {
     @Test
     void getViews_ShouldHandleNullUris() {
         List<ViewStats> viewStatsList = List.of();
-        ResponseEntity<Object> response = ResponseEntity.ok(viewStatsList);
+        ResponseEntity<List<ViewStats>> response = ResponseEntity.ok(viewStatsList);
 
         when(statsClient.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
-                eq(null), eq(true)))
+                isNull(), eq(true)))
                 .thenReturn(response);
 
         Map<String, Long> result = externalStatsService.getViews(null);
@@ -132,7 +133,7 @@ class ExternalStatsServiceImplTest {
     @Test
     void getViews_ShouldUseCorrectTimeRange() {
         List<ViewStats> viewStatsList = List.of();
-        ResponseEntity<Object> response = ResponseEntity.ok(viewStatsList);
+        ResponseEntity<List<ViewStats>> response = ResponseEntity.ok(viewStatsList);
 
         when(statsClient.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
                 anyList(), eq(true)))
@@ -155,7 +156,7 @@ class ExternalStatsServiceImplTest {
                 new ViewStats("ewm-main-service", "/events/2", 5L),
                 new ViewStats("ewm-main-service", "/events/3", 7L)
         );
-        ResponseEntity<Object> response = ResponseEntity.ok(viewStatsList);
+        ResponseEntity<List<ViewStats>> response = ResponseEntity.ok(viewStatsList);
 
         when(statsClient.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
                 eq(List.of("/events/1", "/events/2", "/events/3")), eq(true)))
@@ -167,5 +168,22 @@ class ExternalStatsServiceImplTest {
         assertEquals(10L, result.get("/events/1"));
         assertEquals(5L, result.get("/events/2"));
         assertEquals(7L, result.get("/events/3"));
+    }
+
+    @Test
+    void getViews_ShouldHandleError_AndReturnEmptyMap() {
+        when(statsClient.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
+                anyList(), eq(true)))
+                .thenThrow(new RuntimeException("Stats service error"));
+
+        Map<String, Long> result = externalStatsService.getViews(List.of("/events/1"));
+
+        assertTrue(result.isEmpty());
+        verify(statsClient, times(1)).getStats(
+                any(LocalDateTime.class),
+                any(LocalDateTime.class),
+                anyList(),
+                eq(true)
+        );
     }
 }
