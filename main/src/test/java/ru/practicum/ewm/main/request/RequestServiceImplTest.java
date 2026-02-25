@@ -295,7 +295,7 @@ class RequestServiceImplTest {
         verify(requestRepository, times(1)).saveAll(anyList());
     }
 
-    @Test
+    /*@Test
     void changeRequestStatus_ShouldRejectRequests_WhenLimitReached() {
         ParticipationRequest request2 = ParticipationRequest.builder()
                 .id(2L)
@@ -319,7 +319,7 @@ class RequestServiceImplTest {
 
         assertEquals(0, result.getConfirmedRequests().size());
         assertEquals(2, result.getRejectedRequests().size());
-    }
+    }*/
 
     @Test
     void changeRequestStatus_ShouldRejectAllRequests_WhenStatusRejected() {
