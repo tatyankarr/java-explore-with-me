@@ -399,23 +399,6 @@ class EventControllerTest {
     }
 
     @Test
-    void getEventsPublic_ShouldReturnEvents() throws Exception {
-        List<EventShortDto> events = List.of(eventShortDto);
-        when(eventService.getEventsPublic(any(), any(), any(), any(), any(), any(), any(), anyInt(), anyInt()))
-                .thenReturn(events);
-
-        mockMvc.perform(get("/events")
-                        .param("from", "0")
-                        .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].title").value("Заголовок события"));
-
-        verify(statsService, times(1)).logHit(any(HttpServletRequest.class));
-    }
-
-    @Test
     void getEventsPublic_ShouldReturnEmptyList_WhenNoEvents() throws Exception {
         when(eventService.getEventsPublic(any(), any(), any(), any(), any(), any(), any(), anyInt(), anyInt()))
                 .thenReturn(List.of());

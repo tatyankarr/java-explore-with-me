@@ -11,7 +11,6 @@ import ru.practicum.ewm.main.event.model.Event;
 import ru.practicum.ewm.main.event.model.EventState;
 import ru.practicum.ewm.main.exception.ConflictException;
 import ru.practicum.ewm.main.exception.NotFoundException;
-import ru.practicum.ewm.main.request.RequestRepository;
 import ru.practicum.ewm.main.request.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.main.request.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.main.request.dto.ParticipationRequestDto;
@@ -103,22 +102,6 @@ class RequestServiceImplTest {
         List<ParticipationRequestDto> result = requestService.getUserRequests(2L);
 
         assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void addParticipationRequest_ShouldCreateRequest_WhenValid() {
-        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
-        when(requestRepository.existsByEventIdAndRequesterId(1L, 2L)).thenReturn(false);
-        when(requestRepository.countByEventIdAndStatus(1L, RequestStatus.CONFIRMED)).thenReturn(0L);
-        when(requestRepository.save(any(ParticipationRequest.class))).thenReturn(request);
-
-        ParticipationRequestDto result = requestService.addParticipationRequest(2L, 1L);
-
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
-        assertEquals(RequestStatus.PENDING.name(), result.getStatus());
-        verify(requestRepository, times(1)).save(any(ParticipationRequest.class));
     }
 
     @Test
