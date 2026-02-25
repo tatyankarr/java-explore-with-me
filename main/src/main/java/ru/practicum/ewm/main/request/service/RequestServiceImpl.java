@@ -164,7 +164,6 @@ public class RequestServiceImpl implements RequestService {
         List<ParticipationRequestDto> rejected = new java.util.ArrayList<>();
 
         if (updateRequest.getStatus() == RequestStatus.CONFIRMED) {
-            // Сортируем по дате создания
             requests.sort(Comparator.comparing(ParticipationRequest::getCreated));
 
             for (ParticipationRequest request : requests) {
