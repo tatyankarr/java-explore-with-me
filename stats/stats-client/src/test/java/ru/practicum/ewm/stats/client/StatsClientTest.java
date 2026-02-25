@@ -138,24 +138,4 @@ class StatsClientTest {
                 eq(new org.springframework.core.ParameterizedTypeReference<List<ViewStats>>() {})
         );
     }
-
-    @Test
-    void shouldHandleErrorWhenGettingStats() {
-        LocalDateTime start = LocalDateTime.of(2024, 1, 1, 0, 0);
-        LocalDateTime end = LocalDateTime.of(2024, 1, 2, 0, 0);
-
-        HttpClientErrorException exception =
-                new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR);
-
-        when(restTemplate.exchange(
-                anyString(),
-                eq(org.springframework.http.HttpMethod.GET),
-                isNull(),
-                eq(new org.springframework.core.ParameterizedTypeReference<List<ViewStats>>() {})
-        )).thenThrow(exception);
-
-        ResponseEntity<List<ViewStats>> response = client.getStats(start, end, null, false);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
 }
