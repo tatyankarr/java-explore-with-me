@@ -1,6 +1,7 @@
 package ru.practicum.ewm.main.event.service;
 
 import jakarta.persistence.criteria.Predicate;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -11,7 +12,6 @@ import ru.practicum.ewm.main.category.CategoryRepository;
 import ru.practicum.ewm.main.event.EventRepository;
 import ru.practicum.ewm.main.event.dto.*;
 import ru.practicum.ewm.main.event.model.*;
-import ru.practicum.ewm.main.exception.BadRequestException;
 import ru.practicum.ewm.main.exception.ConflictException;
 import ru.practicum.ewm.main.exception.NotFoundException;
 import ru.practicum.ewm.main.location.LocationRepository;
@@ -107,6 +107,8 @@ public class EventServiceImpl implements EventService {
                 getConfirmedRequests(eventId),
                 0L);
     }
+
+    // ================= PRIVATE =================
 
     @Override
     @Transactional
@@ -220,6 +222,8 @@ public class EventServiceImpl implements EventService {
                 0L);
     }
 
+    // ================= PUBLIC =================
+
     @Override
     public List<EventShortDto> getEventsPublic(String text,
                                                List<Long> categories,
@@ -302,6 +306,8 @@ public class EventServiceImpl implements EventService {
                 getConfirmedRequests(id),
                 eventViews);
     }
+
+    // ================= HELPERS =================
 
     private Event getEventOrThrow(Long id) {
         return eventRepository.findById(id)
@@ -443,15 +449,6 @@ public class EventServiceImpl implements EventService {
             String rangeEnd) {
 
         return (root, query, cb) -> {
-
-            if (rangeStart != null && rangeEnd != null) {
-                LocalDateTime start = LocalDateTime.parse(rangeStart, Constants.FORMATTER);
-                LocalDateTime end = LocalDateTime.parse(rangeEnd, Constants.FORMATTER);
-
-                if (start.isAfter(end)) {
-                    throw new BadRequestException("Start date must be before end date");
-                }
-            }
 
             List<Predicate> predicates = new ArrayList<>();
 

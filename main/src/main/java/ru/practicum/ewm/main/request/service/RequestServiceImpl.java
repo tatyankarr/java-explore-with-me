@@ -144,6 +144,14 @@ public class RequestServiceImpl implements RequestService {
             throw new ConflictException("Only initiator can update requests");
         }
 
+        long confirmedCount = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
+        long participantLimit = event.getParticipantLimit();
+
+        if (participantLimit > 0 && confirmedCount >= participantLimit &&
+                updateRequest.getStatus() == RequestStatus.CONFIRMED) {
+            throw new ConflictException("The participant limit has been reached");
+        }
+
         List<ParticipationRequest> requests =
                 requestRepository.findAllByIdIn(updateRequest.getRequestIds());
 
@@ -155,10 +163,6 @@ public class RequestServiceImpl implements RequestService {
                 throw new ConflictException("Request must be in PENDING state");
             }
         }
-
-        long confirmedCount =
-                requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
-        long participantLimit = event.getParticipantLimit();
 
         List<ParticipationRequestDto> confirmed = new java.util.ArrayList<>();
         List<ParticipationRequestDto> rejected = new java.util.ArrayList<>();
