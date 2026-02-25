@@ -22,6 +22,7 @@ import ru.practicum.ewm.main.user.User;
 import ru.practicum.ewm.main.user.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -193,6 +194,8 @@ class RequestServiceImplTest {
 
     @Test
     void addParticipationRequest_ShouldThrowConflictException_WhenParticipantLimitReached() {
+        event.setRequestModeration(false);
+
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
         when(userRepository.findById(2L)).thenReturn(Optional.of(user));
         when(requestRepository.existsByEventIdAndRequesterId(1L, 2L)).thenReturn(false);
@@ -202,6 +205,7 @@ class RequestServiceImplTest {
                 () -> requestService.addParticipationRequest(2L, 1L));
 
         assertEquals("Participant limit reached", exception.getMessage());
+        verify(requestRepository, never()).save(any(ParticipationRequest.class));
     }
 
     @Test
@@ -288,11 +292,13 @@ class RequestServiceImplTest {
                 .event(event)
                 .requester(User.builder().id(3L).build())
                 .status(RequestStatus.PENDING)
-                .created(now)
+                .created(now.plusMinutes(1))
                 .build();
 
+        List<ParticipationRequest> requests = new ArrayList<>(List.of(request, request2));
+
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(requestRepository.findAllByIdIn(List.of(1L, 2L))).thenReturn(List.of(request, request2));
+        when(requestRepository.findAllByIdIn(List.of(1L, 2L))).thenReturn(requests);
         when(requestRepository.countByEventIdAndStatus(1L, RequestStatus.CONFIRMED)).thenReturn(0L);
 
         EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
@@ -303,6 +309,7 @@ class RequestServiceImplTest {
 
         assertEquals(2, result.getConfirmedRequests().size());
         assertEquals(0, result.getRejectedRequests().size());
+        verify(requestRepository, times(1)).saveAll(anyList());
     }
 
     @Test
@@ -312,11 +319,13 @@ class RequestServiceImplTest {
                 .event(event)
                 .requester(User.builder().id(3L).build())
                 .status(RequestStatus.PENDING)
-                .created(now)
+                .created(now.plusMinutes(1))
                 .build();
 
+        List<ParticipationRequest> requests = new ArrayList<>(List.of(request, request2));
+
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(requestRepository.findAllByIdIn(List.of(1L, 2L))).thenReturn(List.of(request, request2));
+        when(requestRepository.findAllByIdIn(List.of(1L, 2L))).thenReturn(requests);
         when(requestRepository.countByEventIdAndStatus(1L, RequestStatus.CONFIRMED)).thenReturn(10L);
 
         EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
@@ -354,28 +363,29 @@ class RequestServiceImplTest {
     }
 
     @Test
-    void changeRequestStatus_ShouldSkipNonPendingRequests() {
+    void changeRequestStatus_ShouldThrowException_WhenRequestNotPending() {
         request.setStatus(RequestStatus.CONFIRMED);
         ParticipationRequest request2 = ParticipationRequest.builder()
                 .id(2L)
                 .event(event)
                 .requester(User.builder().id(3L).build())
                 .status(RequestStatus.PENDING)
-                .created(now)
+                .created(now.plusMinutes(1))
                 .build();
 
+        List<ParticipationRequest> requests = new ArrayList<>(List.of(request, request2));
+
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(requestRepository.findAllByIdIn(List.of(1L, 2L))).thenReturn(List.of(request, request2));
-        when(requestRepository.countByEventIdAndStatus(1L, RequestStatus.CONFIRMED)).thenReturn(0L);
+        when(requestRepository.findAllByIdIn(List.of(1L, 2L))).thenReturn(requests);
 
         EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
         updateRequest.setRequestIds(List.of(1L, 2L));
         updateRequest.setStatus(RequestStatus.CONFIRMED);
 
-        EventRequestStatusUpdateResult result = requestService.changeRequestStatus(1L, 1L, updateRequest);
+        ConflictException exception = assertThrows(ConflictException.class,
+                () -> requestService.changeRequestStatus(1L, 1L, updateRequest));
 
-        assertEquals(1, result.getConfirmedRequests().size());
-        assertEquals(0, result.getRejectedRequests().size());
+        assertEquals("Request must be in PENDING state", exception.getMessage());
     }
 
     @Test
@@ -405,8 +415,7 @@ class RequestServiceImplTest {
     @Test
     void changeRequestStatus_ShouldHandleEmptyRequestList() {
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(requestRepository.findAllByIdIn(List.of())).thenReturn(List.of());
-        when(requestRepository.countByEventIdAndStatus(1L, RequestStatus.CONFIRMED)).thenReturn(0L);
+        when(requestRepository.findAllByIdIn(List.of())).thenReturn(new ArrayList<>());
 
         EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
         updateRequest.setRequestIds(List.of());
@@ -416,6 +425,7 @@ class RequestServiceImplTest {
 
         assertEquals(0, result.getConfirmedRequests().size());
         assertEquals(0, result.getRejectedRequests().size());
+        verify(requestRepository, times(1)).saveAll(anyList());
     }
 
     @Test
@@ -425,7 +435,7 @@ class RequestServiceImplTest {
                 .event(event)
                 .requester(User.builder().id(3L).build())
                 .status(RequestStatus.PENDING)
-                .created(now)
+                .created(now.plusMinutes(1))
                 .build();
 
         ParticipationRequest request3 = ParticipationRequest.builder()
@@ -433,13 +443,14 @@ class RequestServiceImplTest {
                 .event(event)
                 .requester(User.builder().id(4L).build())
                 .status(RequestStatus.PENDING)
-                .created(now)
+                .created(now.plusMinutes(2))
                 .build();
+
+        List<ParticipationRequest> requests = new ArrayList<>(List.of(request, request2, request3));
 
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
         when(requestRepository.findAllByIdIn(List.of(1L, 2L, 3L)))
-                .thenReturn(List.of(request, request2, request3));
-
+                .thenReturn(requests);
         when(requestRepository.countByEventIdAndStatus(1L, RequestStatus.CONFIRMED)).thenReturn(8L);
 
         EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
