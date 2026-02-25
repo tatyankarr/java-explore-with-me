@@ -19,6 +19,7 @@ import ru.practicum.ewm.main.user.User;
 import ru.practicum.ewm.main.user.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -147,8 +148,7 @@ public class RequestServiceImpl implements RequestService {
         long confirmedCount = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
         long participantLimit = event.getParticipantLimit();
 
-        if (participantLimit > 0 && confirmedCount >= participantLimit &&
-                updateRequest.getStatus() == RequestStatus.CONFIRMED) {
+        if (participantLimit > 0 && confirmedCount >= participantLimit && updateRequest.getStatus() == RequestStatus.CONFIRMED) {
             throw new ConflictException("The participant limit has been reached");
         }
 
@@ -156,19 +156,15 @@ public class RequestServiceImpl implements RequestService {
                 requestRepository.findAllByIdIn(updateRequest.getRequestIds());
 
         for (ParticipationRequest request : requests) {
-            if (!request.getEvent().getId().equals(eventId)) {
-                throw new ConflictException("Request not for this event");
-            }
             if (!request.getStatus().equals(RequestStatus.PENDING)) {
                 throw new ConflictException("Request must be in PENDING state");
             }
         }
 
-        List<ParticipationRequestDto> confirmed = new java.util.ArrayList<>();
-        List<ParticipationRequestDto> rejected = new java.util.ArrayList<>();
+        List<ParticipationRequestDto> confirmed = new ArrayList<>();
+        List<ParticipationRequestDto> rejected = new ArrayList<>();
 
         if (updateRequest.getStatus() == RequestStatus.CONFIRMED) {
-            requests.sort(Comparator.comparing(ParticipationRequest::getCreated));
 
             for (ParticipationRequest request : requests) {
                 if (participantLimit > 0 && confirmedCount >= participantLimit) {

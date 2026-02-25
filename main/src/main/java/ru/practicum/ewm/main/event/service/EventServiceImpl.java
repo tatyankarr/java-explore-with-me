@@ -12,6 +12,7 @@ import ru.practicum.ewm.main.category.CategoryRepository;
 import ru.practicum.ewm.main.event.EventRepository;
 import ru.practicum.ewm.main.event.dto.*;
 import ru.practicum.ewm.main.event.model.*;
+import ru.practicum.ewm.main.exception.BadRequestException;
 import ru.practicum.ewm.main.exception.ConflictException;
 import ru.practicum.ewm.main.exception.NotFoundException;
 import ru.practicum.ewm.main.location.LocationRepository;
@@ -37,6 +38,7 @@ public class EventServiceImpl implements EventService {
     private final LocationRepository locationRepository;
     private final RequestRepository requestRepository;
     private final ExternalStatsService statsService;
+
 
     @Override
     public List<EventFullDto> getEventsAdmin(List<Long> users,
@@ -108,8 +110,6 @@ public class EventServiceImpl implements EventService {
                 0L);
     }
 
-    // ================= PRIVATE =================
-
     @Override
     @Transactional
     public EventFullDto addEvent(Long userId, NewEventDto dto) {
@@ -124,7 +124,7 @@ public class EventServiceImpl implements EventService {
                 LocalDateTime.parse(dto.getEventDate(), Constants.FORMATTER);
 
         if (eventDate.isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new ConflictException("Event date must be at least 2 hours later");
+            throw new BadRequestException("Event date must be at least 2 hours later");
         }
 
         Event event = EventMapper.toEvent(dto);
@@ -189,7 +189,7 @@ public class EventServiceImpl implements EventService {
                     dto.getEventDate(), Constants.FORMATTER);
 
             if (newDate.isBefore(LocalDateTime.now().plusHours(2))) {
-                throw new ConflictException("Event date must be at least 2 hours later");
+                throw new BadRequestException("Event date must be at least 2 hours later");
             }
         }
 
@@ -306,8 +306,6 @@ public class EventServiceImpl implements EventService {
                 getConfirmedRequests(id),
                 eventViews);
     }
-
-    // ================= HELPERS =================
 
     private Event getEventOrThrow(Long id) {
         return eventRepository.findById(id)

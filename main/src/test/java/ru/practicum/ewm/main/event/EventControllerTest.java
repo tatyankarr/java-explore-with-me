@@ -63,17 +63,16 @@ class EventControllerTest {
                 .lon(37.62f)
                 .build();
 
-        newEventDto = NewEventDto.builder()
-                .annotation("Аннотация события для тестирования")
-                .category(1L)
-                .description("Полное описание события для тестирования")
-                .eventDate("2025-12-31 18:00:00")
-                .location(locationDto)
-                .paid(true)
-                .participantLimit(100)
-                .requestModeration(true)
-                .title("Заголовок события")
-                .build();
+        newEventDto = new NewEventDto();
+        newEventDto.setAnnotation("Аннотация события для тестирования");
+        newEventDto.setCategory(1L);
+        newEventDto.setDescription("Полное описание события для тестирования");
+        newEventDto.setEventDate("2025-12-31 18:00:00");
+        newEventDto.setLocation(locationDto);
+        newEventDto.setPaid(true);
+        newEventDto.setParticipantLimit(100);
+        newEventDto.setRequestModeration(true);
+        newEventDto.setTitle("Заголовок события");
 
         eventFullDto = EventFullDto.builder()
                 .id(1L)
@@ -207,14 +206,13 @@ class EventControllerTest {
 
     @Test
     void addEvent_ShouldReturnBadRequest_WhenAnnotationIsBlank() throws Exception {
-        NewEventDto invalidDto = NewEventDto.builder()
-                .annotation("")
-                .category(1L)
-                .description("Описание")
-                .eventDate("2025-12-31 18:00:00")
-                .location(new LocationDto(55.75f, 37.62f))
-                .title("Заголовок")
-                .build();
+        NewEventDto invalidDto = new NewEventDto();
+        invalidDto.setAnnotation("");
+        invalidDto.setCategory(1L);
+        invalidDto.setDescription("Описание");
+        invalidDto.setEventDate("2025-12-31 18:00:00");
+        invalidDto.setLocation(new LocationDto(55.75f, 37.62f));
+        invalidDto.setTitle("Заголовок");
 
         mockMvc.perform(post("/users/1/events")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -226,14 +224,13 @@ class EventControllerTest {
 
     @Test
     void addEvent_ShouldReturnBadRequest_WhenAnnotationIsTooShort() throws Exception {
-        NewEventDto invalidDto = NewEventDto.builder()
-                .annotation("Короткая")
-                .category(1L)
-                .description("Описание")
-                .eventDate("2025-12-31 18:00:00")
-                .location(new LocationDto(55.75f, 37.62f))
-                .title("Заголовок")
-                .build();
+        NewEventDto invalidDto = new NewEventDto();
+        invalidDto.setAnnotation("Короткая");
+        invalidDto.setCategory(1L);
+        invalidDto.setDescription("Описание");
+        invalidDto.setEventDate("2025-12-31 18:00:00");
+        invalidDto.setLocation(new LocationDto(55.75f, 37.62f));
+        invalidDto.setTitle("Заголовок");
 
         mockMvc.perform(post("/users/1/events")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -245,14 +242,13 @@ class EventControllerTest {
 
     @Test
     void addEvent_ShouldReturnBadRequest_WhenDescriptionIsBlank() throws Exception {
-        NewEventDto invalidDto = NewEventDto.builder()
-                .annotation("Аннотация события для тестирования")
-                .category(1L)
-                .description("")
-                .eventDate("2025-12-31 18:00:00")
-                .location(new LocationDto(55.75f, 37.62f))
-                .title("Заголовок")
-                .build();
+        NewEventDto invalidDto = new NewEventDto();
+        invalidDto.setAnnotation("Аннотация события для тестирования");
+        invalidDto.setCategory(1L);
+        invalidDto.setDescription("");
+        invalidDto.setEventDate("2025-12-31 18:00:00");
+        invalidDto.setLocation(new LocationDto(55.75f, 37.62f));
+        invalidDto.setTitle("Заголовок");
 
         mockMvc.perform(post("/users/1/events")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -264,14 +260,13 @@ class EventControllerTest {
 
     @Test
     void addEvent_ShouldReturnBadRequest_WhenEventDateIsBlank() throws Exception {
-        NewEventDto invalidDto = NewEventDto.builder()
-                .annotation("Аннотация события для тестирования")
-                .category(1L)
-                .description("Описание события")
-                .eventDate("")
-                .location(new LocationDto(55.75f, 37.62f))
-                .title("Заголовок")
-                .build();
+        NewEventDto invalidDto = new NewEventDto();
+        invalidDto.setAnnotation("Аннотация события для тестирования");
+        invalidDto.setCategory(1L);
+        invalidDto.setDescription("Короткое описание");
+        invalidDto.setEventDate("2025-12-31 18:00:00");
+        invalidDto.setLocation(new LocationDto(55.75f, 37.62f));
+        invalidDto.setTitle("Заголовок");
 
         mockMvc.perform(post("/users/1/events")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -283,14 +278,13 @@ class EventControllerTest {
 
     @Test
     void addEvent_ShouldReturnBadRequest_WhenLocationIsNull() throws Exception {
-        NewEventDto invalidDto = NewEventDto.builder()
-                .annotation("Аннотация события для тестирования")
-                .category(1L)
-                .description("Описание события")
-                .eventDate("2025-12-31 18:00:00")
-                .location(null)
-                .title("Заголовок")
-                .build();
+        NewEventDto invalidDto = new NewEventDto();
+        invalidDto.setAnnotation("Аннотация события для тестирования");
+        invalidDto.setCategory(1L);
+        invalidDto.setDescription("Описание события");
+        invalidDto.setEventDate("");
+        invalidDto.setLocation(new LocationDto(55.75f, 37.62f));
+        invalidDto.setTitle("Заголовок");
 
         mockMvc.perform(post("/users/1/events")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -302,14 +296,13 @@ class EventControllerTest {
 
     @Test
     void addEvent_ShouldReturnBadRequest_WhenTitleIsBlank() throws Exception {
-        NewEventDto invalidDto = NewEventDto.builder()
-                .annotation("Аннотация события для тестирования")
-                .category(1L)
-                .description("Описание события")
-                .eventDate("2025-12-31 18:00:00")
-                .location(new LocationDto(55.75f, 37.62f))
-                .title("")
-                .build();
+        NewEventDto invalidDto = new NewEventDto();
+        invalidDto.setAnnotation("Аннотация события для тестирования");
+        invalidDto.setCategory(1L);
+        invalidDto.setDescription("Описание события");
+        invalidDto.setEventDate("2025-12-31 18:00:00");
+        invalidDto.setLocation(null);
+        invalidDto.setTitle("Заголовок");
 
         mockMvc.perform(post("/users/1/events")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -321,14 +314,13 @@ class EventControllerTest {
 
     @Test
     void addEvent_ShouldReturnBadRequest_WhenTitleIsTooShort() throws Exception {
-        NewEventDto invalidDto = NewEventDto.builder()
-                .annotation("Аннотация события для тестирования")
-                .category(1L)
-                .description("Описание события")
-                .eventDate("2025-12-31 18:00:00")
-                .location(new LocationDto(55.75f, 37.62f))
-                .title("За")
-                .build();
+        NewEventDto invalidDto = new NewEventDto();
+        invalidDto.setAnnotation("Аннотация события для тестирования");
+        invalidDto.setCategory(1L);
+        invalidDto.setDescription("Описание события");
+        invalidDto.setEventDate("2025-12-31 18:00:00");
+        invalidDto.setLocation(null);
+        invalidDto.setTitle("Заголовок");
 
         mockMvc.perform(post("/users/1/events")
                         .contentType(MediaType.APPLICATION_JSON)
