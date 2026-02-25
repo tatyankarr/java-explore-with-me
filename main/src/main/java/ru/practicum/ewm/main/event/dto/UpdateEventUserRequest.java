@@ -1,6 +1,7 @@
 package ru.practicum.ewm.main.event.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import ru.practicum.ewm.main.event.model.UserStateAction;
@@ -20,6 +21,7 @@ public class UpdateEventUserRequest {
     private String eventDate;
     private LocationDto location;
     private Boolean paid;
+    @PositiveOrZero
     private Integer participantLimit;
     private Boolean requestModeration;
     private UserStateAction stateAction;

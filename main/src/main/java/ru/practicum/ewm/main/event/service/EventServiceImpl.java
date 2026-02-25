@@ -70,13 +70,20 @@ public class EventServiceImpl implements EventService {
 
         Event event = getEventOrThrow(eventId);
 
+        if (dto.getEventDate() != null) {
+            LocalDateTime newDate = LocalDateTime.parse(dto.getEventDate(), Constants.FORMATTER);
+            if (newDate.isBefore(LocalDateTime.now().plusHours(1))) {
+                throw new BadRequestException("Event date must be at least 1 hour later than now");
+            }
+        }
+
         if (dto.getStateAction() != null) {
-
             if (dto.getStateAction() == AdminStateAction.PUBLISH_EVENT) {
-
                 if (event.getState() != EventState.PENDING) {
                     throw new ConflictException("Only pending events can be published");
                 }
+                event.setState(EventState.PUBLISHED);
+                event.setPublishedOn(LocalDateTime.now());
 
                 if (dto.getEventDate() != null) {
                     LocalDateTime newDate = LocalDateTime.parse(

@@ -31,7 +31,7 @@ public class NewEventDto {
     private Boolean paid = false;
 
     @PositiveOrZero
-    private Integer participantLimit;
+    private Integer participantLimit = 0;
 
     private Boolean requestModeration = true;
 

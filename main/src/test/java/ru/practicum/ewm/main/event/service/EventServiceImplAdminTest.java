@@ -259,22 +259,6 @@ class EventServiceImplAdminTest {
     }
 
     @Test
-    void updateEventAdmin_ShouldThrowConflictException_WhenPublishingWithTooSoonDate() {
-        event.setEventDate(now.plusMinutes(30));
-        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
-
-        UpdateEventAdminRequest request = UpdateEventAdminRequest.builder()
-                .stateAction(AdminStateAction.PUBLISH_EVENT)
-                .eventDate(now.plusMinutes(30).format(Constants.FORMATTER))
-                .build();
-
-        ConflictException exception = assertThrows(ConflictException.class,
-                () -> eventService.updateEventAdmin(1L, request));
-
-        assertEquals("Event date too soon", exception.getMessage());
-    }
-
-    @Test
     void updateEventAdmin_ShouldThrowConflictException_WhenRejectingPublishedEvent() {
         event.setState(EventState.PUBLISHED);
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));

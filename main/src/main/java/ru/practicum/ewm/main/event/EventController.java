@@ -85,6 +85,7 @@ public class EventController {
                 throw new BadRequestException("Start date must be before end date");
             }
         }
+        statsService.logHit(request);
 
         return eventService.getEventsPublic(text, categories, paid, rangeStart,
                 rangeEnd, onlyAvailable, sort, from, size);
