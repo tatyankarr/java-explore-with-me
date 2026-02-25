@@ -1,7 +1,6 @@
 package ru.practicum.ewm.main.event.service;
 
 import jakarta.persistence.criteria.Predicate;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
