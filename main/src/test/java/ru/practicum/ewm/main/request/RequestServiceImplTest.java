@@ -295,32 +295,6 @@ class RequestServiceImplTest {
         verify(requestRepository, times(1)).saveAll(anyList());
     }
 
-    /*@Test
-    void changeRequestStatus_ShouldRejectRequests_WhenLimitReached() {
-        ParticipationRequest request2 = ParticipationRequest.builder()
-                .id(2L)
-                .event(event)
-                .requester(User.builder().id(3L).build())
-                .status(RequestStatus.PENDING)
-                .created(now.plusMinutes(1))
-                .build();
-
-        List<ParticipationRequest> requests = new ArrayList<>(List.of(request, request2));
-
-        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(requestRepository.findAllByIdIn(List.of(1L, 2L))).thenReturn(requests);
-        when(requestRepository.countByEventIdAndStatus(1L, RequestStatus.CONFIRMED)).thenReturn(10L);
-
-        EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
-        updateRequest.setRequestIds(List.of(1L, 2L));
-        updateRequest.setStatus(RequestStatus.CONFIRMED);
-
-        EventRequestStatusUpdateResult result = requestService.changeRequestStatus(1L, 1L, updateRequest);
-
-        assertEquals(0, result.getConfirmedRequests().size());
-        assertEquals(2, result.getRejectedRequests().size());
-    }*/
-
     @Test
     void changeRequestStatus_ShouldRejectAllRequests_WhenStatusRejected() {
         ParticipationRequest request2 = ParticipationRequest.builder()

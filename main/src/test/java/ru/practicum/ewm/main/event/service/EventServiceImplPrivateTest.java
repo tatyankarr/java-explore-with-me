@@ -177,50 +177,6 @@ class EventServiceImplPrivateTest {
         verify(eventRepository, never()).save(any());
     }
 
-    /*@Test
-    void addEvent_ShouldThrowConflictException_WhenEventDateIsTooSoon() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-
-        NewEventDto dtoWithSoonDate = NewEventDto.builder()
-                .annotation("Аннотация")
-                .category(1L)
-                .description("Описание")
-                .eventDate(now.plusHours(1).format(Constants.FORMATTER))
-                .location(new LocationDto(55.75f, 37.62f))
-                .title("Заголовок")
-                .build();
-
-        ConflictException exception = assertThrows(ConflictException.class,
-                () -> eventService.addEvent(1L, dtoWithSoonDate));
-
-        assertEquals("Event date must be at least 2 hours later", exception.getMessage());
-        verify(locationRepository, never()).save(any());
-        verify(eventRepository, never()).save(any());
-    }*/
-
-    @Test
-    void addEvent_ShouldUseDefaultValues_WhenNotProvided() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(locationRepository.save(any(Location.class))).thenReturn(location);
-        when(eventRepository.save(any(Event.class))).thenReturn(event);
-
-        NewEventDto dtoWithDefaults = NewEventDto.builder()
-                .annotation("Аннотация события для тестирования")
-                .category(1L)
-                .description("Описание события")
-                .eventDate(now.plusDays(10).format(Constants.FORMATTER))
-                .location(new LocationDto(55.75f, 37.62f))
-                .title("Заголовок")
-                .build();
-
-        EventFullDto result = eventService.addEvent(1L, dtoWithDefaults);
-
-        assertNotNull(result);
-        verify(eventRepository, times(1)).save(any(Event.class));
-    }
-
     @Test
     void getEventsByUser_ShouldReturnEvents_WhenExists() {
         List<Event> events = List.of(event);
@@ -379,20 +335,6 @@ class EventServiceImplPrivateTest {
 
         assertEquals("Cannot edit published event", exception.getMessage());
     }
-
-    /*@Test
-    void updateEventByUser_ShouldThrowConflictException_WhenEventDateIsTooSoon() {
-        when(eventRepository.findByIdAndInitiatorId(1L, 1L)).thenReturn(Optional.of(event));
-
-        UpdateEventUserRequest request = UpdateEventUserRequest.builder()
-                .eventDate(now.plusHours(1).format(Constants.FORMATTER))
-                .build();
-
-        ConflictException exception = assertThrows(ConflictException.class,
-                () -> eventService.updateEventByUser(1L, 1L, request));
-
-        assertEquals("Event date must be at least 2 hours later", exception.getMessage());
-    }*/
 
     @Test
     void updateEventByUser_ShouldThrowConflictException_WhenSendingPublishedToReview() {

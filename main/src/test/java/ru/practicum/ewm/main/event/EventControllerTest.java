@@ -431,13 +431,16 @@ class EventControllerTest {
 
     @Test
     void getEventPublic_ShouldReturnEvent() throws Exception {
-        when(eventService.getEventPublic(1L)).thenReturn(eventFullDto);
+
+        when(eventService.getEventPublic(eq(1L), any(HttpServletRequest.class)))
+                .thenReturn(eventFullDto);
 
         mockMvc.perform(get("/events/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("Заголовок события"));
 
-        verify(statsService, times(1)).logHit(any(HttpServletRequest.class));
+        verify(eventService, times(1))
+                .getEventPublic(eq(1L), any(HttpServletRequest.class));
     }
 }

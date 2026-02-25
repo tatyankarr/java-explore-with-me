@@ -37,7 +37,7 @@ public class ExternalStatsServiceImpl implements ExternalStatsService {
         try {
             ResponseEntity<List<ViewStats>> response = statsClient.getStats(
                     LocalDateTime.of(2000, 1, 1, 0, 0),
-                    LocalDateTime.now().plusYears(100),
+                    LocalDateTime.now(),
                     uris,
                     true
             );

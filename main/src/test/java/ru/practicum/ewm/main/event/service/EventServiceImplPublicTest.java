@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -352,17 +353,23 @@ class EventServiceImplPublicTest {
 
     @Test
     void getEventPublic_ShouldReturnEvent_WhenPublished() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event1));
         when(requestRepository.countByEventIdAndStatus(1L, RequestStatus.CONFIRMED)).thenReturn(5L);
-        when(statsService.getViews(List.of("/events/1"))).thenReturn(Map.of("/events/1", 100L));
+        when(statsService.getViews(List.of("/events/1")))
+                .thenReturn(Map.of("/events/1", 100L));
 
-        EventFullDto result = eventService.getEventPublic(1L);
+        EventFullDto result = eventService.getEventPublic(1L, request);
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
         assertEquals(EventState.PUBLISHED.name(), result.getState());
         assertEquals(5L, result.getConfirmedRequests());
-        assertEquals(100L, result.getViews());
+
+        assertEquals(101L, result.getViews());
+
+        verify(statsService).logHit(request);
     }
 
     @Test
@@ -370,7 +377,7 @@ class EventServiceImplPublicTest {
         when(eventRepository.findById(999L)).thenReturn(Optional.empty());
 
         NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> eventService.getEventPublic(999L));
+                () -> eventService.getEventPublic(999L, mock(HttpServletRequest.class)));
 
         assertEquals("Event not found", exception.getMessage());
     }
@@ -381,45 +388,58 @@ class EventServiceImplPublicTest {
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event1));
 
         NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> eventService.getEventPublic(1L));
+                () -> eventService.getEventPublic(1L, mock(HttpServletRequest.class)));
 
         assertEquals("Event not published", exception.getMessage());
     }
 
     @Test
     void getEventPublic_ShouldReturnEvent_WhenEventIsPublishedAndHasNoViews() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event1));
         when(requestRepository.countByEventIdAndStatus(1L, RequestStatus.CONFIRMED)).thenReturn(5L);
-        when(statsService.getViews(List.of("/events/1"))).thenReturn(Map.of());
+        when(statsService.getViews(List.of("/events/1")))
+                .thenReturn(Map.of());
 
-        EventFullDto result = eventService.getEventPublic(1L);
+        EventFullDto result = eventService.getEventPublic(1L, request);
 
-        assertNotNull(result);
         assertEquals(1L, result.getId());
-        assertEquals(0L, result.getViews());
+
+        assertEquals(1L, result.getViews());
+
+        verify(statsService).logHit(request);
     }
 
     @Test
     void getEventPublic_ShouldReturnEvent_WhenEventHasNoConfirmedRequests() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event1));
         when(requestRepository.countByEventIdAndStatus(1L, RequestStatus.CONFIRMED)).thenReturn(0L);
-        when(statsService.getViews(List.of("/events/1"))).thenReturn(Map.of("/events/1", 50L));
+        when(statsService.getViews(List.of("/events/1")))
+                .thenReturn(Map.of("/events/1", 50L));
 
-        EventFullDto result = eventService.getEventPublic(1L);
+        EventFullDto result = eventService.getEventPublic(1L, request);
 
-        assertNotNull(result);
         assertEquals(0L, result.getConfirmedRequests());
-        assertEquals(50L, result.getViews());
+        assertEquals(51L, result.getViews());
+
+        verify(statsService).logHit(request);
     }
 
     @Test
     void getEventPublic_ShouldCallStatsServiceWithCorrectUri() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event1));
         when(requestRepository.countByEventIdAndStatus(1L, RequestStatus.CONFIRMED)).thenReturn(0L);
-        when(statsService.getViews(List.of("/events/1"))).thenReturn(Map.of("/events/1", 10L));
+        when(statsService.getViews(List.of("/events/1")))
+                .thenReturn(Map.of("/events/1", 10L));
 
-        eventService.getEventPublic(1L);
+        eventService.getEventPublic(1L, request);
 
         verify(statsService, times(1)).getViews(List.of("/events/1"));
+        verify(statsService, times(1)).logHit(request);
     }
 }

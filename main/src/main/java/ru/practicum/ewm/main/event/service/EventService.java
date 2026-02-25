@@ -1,5 +1,6 @@
 package ru.practicum.ewm.main.event.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import ru.practicum.ewm.main.event.dto.*;
 
 import java.util.List;
@@ -39,5 +40,5 @@ public interface EventService {
                                         Integer from,
                                         Integer size);
 
-    EventFullDto getEventPublic(Long id);
+    EventFullDto getEventPublic(Long id, HttpServletRequest request);
 }

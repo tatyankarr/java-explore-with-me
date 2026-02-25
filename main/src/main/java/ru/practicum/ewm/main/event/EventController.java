@@ -93,7 +93,6 @@ public class EventController {
 
     @GetMapping("/events/{id}")
     public EventFullDto getEventPublic(@PathVariable Long id, HttpServletRequest request) {
-        statsService.logHit(request);
-        return eventService.getEventPublic(id);
+        return eventService.getEventPublic(id, request);
     }
 }

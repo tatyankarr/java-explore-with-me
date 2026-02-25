@@ -1,6 +1,7 @@
 package ru.practicum.ewm.main.event.service;
 
 import jakarta.persistence.criteria.Predicate;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -228,8 +229,6 @@ public class EventServiceImpl implements EventService {
                 0L);
     }
 
-    // ================= PUBLIC =================
-
     @Override
     public List<EventShortDto> getEventsPublic(String text,
                                                List<Long> categories,
@@ -293,7 +292,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventFullDto getEventPublic(Long id) {
+    public EventFullDto getEventPublic(Long id, HttpServletRequest request) {
 
         Event event = getEventOrThrow(id);
 
@@ -301,16 +300,20 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Event not published");
         }
 
+        String uri = "/events/" + id;
+
         Map<String, Long> views =
-                statsService.getViews(List.of("/events/" + id));
+                statsService.getViews(List.of(uri));
 
         Long eventViews =
-                views.getOrDefault("/events/" + id, 0L);
+                views.getOrDefault(uri, 0L);
+
+        statsService.logHit(request);
 
         return EventMapper.toEventFullDto(
                 event,
                 getConfirmedRequests(id),
-                eventViews);
+                eventViews + 1);
     }
 
     private Event getEventOrThrow(Long id) {
