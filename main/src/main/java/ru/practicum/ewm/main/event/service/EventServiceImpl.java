@@ -78,6 +78,10 @@ public class EventServiceImpl implements EventService {
                     dto.getEventDate(), Constants.FORMATTER);
         }
 
+        if (finalEventDate.isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Event date cannot be in the past");
+        }
+
         if (dto.getStateAction() != null) {
 
             switch (dto.getStateAction()) {
