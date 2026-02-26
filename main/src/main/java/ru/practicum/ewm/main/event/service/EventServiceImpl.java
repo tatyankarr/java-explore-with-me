@@ -71,45 +71,61 @@ public class EventServiceImpl implements EventService {
 
         Event event = getEventOrThrow(eventId);
 
+        LocalDateTime finalEventDate = event.getEventDate();
+
         if (dto.getEventDate() != null) {
-            LocalDateTime newDate = LocalDateTime.parse(dto.getEventDate(), Constants.FORMATTER);
-            if (newDate.isBefore(LocalDateTime.now().plusHours(1))) {
-                throw new BadRequestException("Event date must be at least 1 hour later than now");
-            }
+            finalEventDate = LocalDateTime.parse(
+                    dto.getEventDate(), Constants.FORMATTER);
         }
 
         if (dto.getStateAction() != null) {
-            if (dto.getStateAction() == AdminStateAction.PUBLISH_EVENT) {
-                if (event.getState() != EventState.PENDING) {
-                    throw new ConflictException("Only pending events can be published");
-                }
-                event.setState(EventState.PUBLISHED);
-                event.setPublishedOn(LocalDateTime.now());
 
-                if (dto.getEventDate() != null) {
-                    LocalDateTime newDate = LocalDateTime.parse(
-                            dto.getEventDate(), Constants.FORMATTER);
+            switch (dto.getStateAction()) {
 
-                    if (newDate.isBefore(LocalDateTime.now().plusHours(1))) {
-                        throw new ConflictException("Event date too soon");
+                case PUBLISH_EVENT -> {
+
+                    if (event.getState() != EventState.PENDING) {
+                        throw new ConflictException(
+                                "Only pending events can be published");
                     }
+
+                    LocalDateTime eventDateToCheck;
+                    if (dto.getEventDate() != null) {
+                        eventDateToCheck = LocalDateTime.parse(dto.getEventDate(), Constants.FORMATTER);
+                    } else {
+                        eventDateToCheck = event.getEventDate();
+                    }
+
+                    if (eventDateToCheck.isBefore(LocalDateTime.now().plusHours(1))) {
+                        throw new ConflictException(
+                                "Event date must be at least 1 hour later than now");
+                    }
+
+                    if (dto.getEventDate() != null) {
+                        event.setEventDate(eventDateToCheck);
+                    }
+
+                    event.setState(EventState.PUBLISHED);
+                    event.setPublishedOn(LocalDateTime.now());
                 }
 
-                event.setState(EventState.PUBLISHED);
-                event.setPublishedOn(LocalDateTime.now());
-            }
+                case REJECT_EVENT -> {
 
-            if (dto.getStateAction() == AdminStateAction.REJECT_EVENT) {
+                    if (event.getState() == EventState.PUBLISHED) {
+                        throw new ConflictException(
+                                "Cannot reject published event");
+                    }
 
-                if (event.getState() == EventState.PUBLISHED) {
-                    throw new ConflictException("Cannot reject published event");
+                    event.setState(EventState.CANCELED);
                 }
-
-                event.setState(EventState.CANCELED);
             }
         }
 
         updateEventFields(event, dto);
+
+        if (dto.getEventDate() != null) {
+            event.setEventDate(finalEventDate);
+        }
 
         return EventMapper.toEventFullDto(
                 event,
@@ -240,14 +256,15 @@ public class EventServiceImpl implements EventService {
                                                Integer from,
                                                Integer size) {
 
-        Pageable pageable = PageRequest.of(0, size * 10);
+        Pageable pageable = buildPublicPageable(sort, from, size);
 
         Specification<Event> spec =
                 buildPublicSpecification(text, categories, paid,
                         rangeStart, rangeEnd);
 
-        List<Event> events =
-                eventRepository.findAll(spec, pageable).getContent();
+        Page<Event> page = eventRepository.findAll(spec, pageable);
+
+        List<Event> events = page.getContent();
 
         if (Boolean.TRUE.equals(onlyAvailable)) {
             events = events.stream()
@@ -275,15 +292,7 @@ public class EventServiceImpl implements EventService {
                     .toList();
         }
 
-        int start = from;
-        int end = Math.min(start + size, events.size());
-
-        if (start > events.size()) {
-            return List.of();
-        }
-
-        return events.subList(start, end)
-                .stream()
+        return events.stream()
                 .map(e -> EventMapper.toEventShortDto(
                         e,
                         getConfirmedRequests(e.getId()),
@@ -330,13 +339,15 @@ public class EventServiceImpl implements EventService {
     private Pageable buildPublicPageable(String sort,
                                          Integer from,
                                          Integer size) {
+        Sort sorting;
 
-        if ("EVENT_DATE".equals(sort)) {
-            return PageRequest.of(from / size, size,
-                    Sort.by("eventDate").descending());
+        if ("EVENT_DATE".equals(sort) || sort == null) {
+            sorting = Sort.by("eventDate").descending();
+        } else {
+            sorting = Sort.unsorted();
         }
 
-        return PageRequest.of(from / size, size);
+        return PageRequest.of(from / size, size, sorting);
     }
 
     private void updateEventFields(Event event,
@@ -462,7 +473,7 @@ public class EventServiceImpl implements EventService {
             predicates.add(cb.equal(root.get("state"),
                     EventState.PUBLISHED));
 
-            if (text != null) {
+            if (text != null && !text.isBlank()) {
                 Predicate annotation = cb.like(
                         cb.lower(root.get("annotation")),
                         "%" + text.toLowerCase() + "%");
@@ -474,24 +485,31 @@ public class EventServiceImpl implements EventService {
                 predicates.add(cb.or(annotation, description));
             }
 
-            if (categories != null)
+            if (categories != null && !categories.isEmpty())
                 predicates.add(root.get("category")
                         .get("id").in(categories));
 
             if (paid != null)
                 predicates.add(cb.equal(root.get("paid"), paid));
 
-            if (rangeStart != null)
-                predicates.add(cb.greaterThanOrEqualTo(
-                        root.get("eventDate"),
-                        LocalDateTime.parse(rangeStart,
-                                Constants.FORMATTER)));
+            LocalDateTime now = LocalDateTime.now();
 
-            if (rangeEnd != null)
-                predicates.add(cb.lessThanOrEqualTo(
-                        root.get("eventDate"),
-                        LocalDateTime.parse(rangeEnd,
-                                Constants.FORMATTER)));
+            if (rangeStart == null && rangeEnd == null) {
+                predicates.add(cb.greaterThanOrEqualTo(
+                        root.get("eventDate"), now));
+            } else {
+                if (rangeStart != null) {
+                    predicates.add(cb.greaterThanOrEqualTo(
+                            root.get("eventDate"),
+                            LocalDateTime.parse(rangeStart, Constants.FORMATTER)));
+                }
+
+                if (rangeEnd != null) {
+                    predicates.add(cb.lessThanOrEqualTo(
+                            root.get("eventDate"),
+                            LocalDateTime.parse(rangeEnd, Constants.FORMATTER)));
+                }
+            }
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
