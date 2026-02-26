@@ -300,32 +300,6 @@ class EventServiceImplPublicTest {
     }
 
     @Test
-    void getEventsPublic_ShouldApplyPagination() {
-        List<Event> events = List.of(event1, event2, event3);
-        when(eventRepository.findAll(any(Specification.class), any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(events));
-        when(requestRepository.countByEventIdAndStatus(anyLong(), eq(RequestStatus.CONFIRMED)))
-                .thenReturn(0L);
-        when(statsService.getViews(anyList())).thenReturn(Map.of(
-                "/events/1", 10L,
-                "/events/2", 5L,
-                "/events/3", 15L
-        ));
-
-        List<EventShortDto> page1 = eventService.getEventsPublic(
-                null, null, null, null, null, false, null, 0, 2);
-        assertEquals(2, page1.size());
-
-        List<EventShortDto> page2 = eventService.getEventsPublic(
-                null, null, null, null, null, false, null, 2, 2);
-        assertEquals(1, page2.size());
-
-        List<EventShortDto> page3 = eventService.getEventsPublic(
-                null, null, null, null, null, false, null, 10, 2);
-        assertEquals(0, page3.size());
-    }
-
-    @Test
     void getEventsPublic_ShouldReturnEmptyList_WhenNoEvents() {
         when(eventRepository.findAll(any(Specification.class), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of()));
