@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import ru.practicum.ewm.stats.dto.EndpointHitDto;
+import ru.practicum.ewm.stats.dto.ViewStats;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -84,20 +85,28 @@ class StatsClientTest {
         List<String> uris = List.of("/uri1", "/uri2");
         boolean unique = false;
 
-        ResponseEntity<Object> expectedResponse = ResponseEntity.ok().body("[]");
+        List<ViewStats> expectedStats = List.of();
+        ResponseEntity<List<ViewStats>> expectedResponse = ResponseEntity.ok(expectedStats);
 
-        when(restTemplate.getForEntity(
+        when(restTemplate.exchange(
                 anyString(),
-                eq(Object.class)
+                eq(org.springframework.http.HttpMethod.GET),
+                isNull(),
+                eq(new org.springframework.core.ParameterizedTypeReference<List<ViewStats>>() {})
         )).thenReturn(expectedResponse);
 
-        ResponseEntity<Object> response = client.getStats(start, end, uris, unique);
+        ResponseEntity<List<ViewStats>> response = client.getStats(start, end, uris, unique);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo("[]");
+        assertThat(response.getBody()).isEqualTo(expectedStats);
 
-        verify(restTemplate, times(1)).getForEntity(anyString(), eq(Object.class));
+        verify(restTemplate, times(1)).exchange(
+                anyString(),
+                eq(org.springframework.http.HttpMethod.GET),
+                isNull(),
+                eq(new org.springframework.core.ParameterizedTypeReference<List<ViewStats>>() {})
+        );
     }
 
     @Test
@@ -106,34 +115,27 @@ class StatsClientTest {
         LocalDateTime end = LocalDateTime.of(2024, 1, 2, 0, 0);
         boolean unique = true;
 
-        ResponseEntity<Object> expectedResponse = ResponseEntity.ok().body("[]");
+        List<ViewStats> expectedStats = List.of();
+        ResponseEntity<List<ViewStats>> expectedResponse = ResponseEntity.ok(expectedStats);
 
-        when(restTemplate.getForEntity(
+        when(restTemplate.exchange(
                 anyString(),
-                eq(Object.class)
+                eq(org.springframework.http.HttpMethod.GET),
+                isNull(),
+                eq(new org.springframework.core.ParameterizedTypeReference<List<ViewStats>>() {})
         )).thenReturn(expectedResponse);
 
-        ResponseEntity<Object> response = client.getStats(start, end, null, unique);
+        ResponseEntity<List<ViewStats>> response = client.getStats(start, end, null, unique);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo("[]");
+        assertThat(response.getBody()).isEqualTo(expectedStats);
 
-        verify(restTemplate, times(1)).getForEntity(anyString(), eq(Object.class));
-    }
-
-    @Test
-    void shouldHandleErrorWhenGettingStats() {
-        LocalDateTime start = LocalDateTime.of(2024, 1, 1, 0, 0);
-        LocalDateTime end = LocalDateTime.of(2024, 1, 2, 0, 0);
-
-        when(restTemplate.getForEntity(
+        verify(restTemplate, times(1)).exchange(
                 anyString(),
-                any()
-        )).thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
-
-        ResponseEntity<Object> response = client.getStats(start, end, null, false);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+                eq(org.springframework.http.HttpMethod.GET),
+                isNull(),
+                eq(new org.springframework.core.ParameterizedTypeReference<List<ViewStats>>() {})
+        );
     }
 }

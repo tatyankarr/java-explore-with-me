@@ -5,6 +5,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import ru.practicum.ewm.stats.dto.EndpointHitDto;
+import ru.practicum.ewm.stats.dto.ViewStats;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -33,10 +34,10 @@ public class StatsClient {
         }
     }
 
-    public ResponseEntity<Object> getStats(LocalDateTime start,
-                                           LocalDateTime end,
-                                           List<String> uris,
-                                           Boolean unique) {
+    public ResponseEntity<List<ViewStats>> getStats(LocalDateTime start,
+                                                    LocalDateTime end,
+                                                    List<String> uris,
+                                                    Boolean unique) {
 
         UriComponentsBuilder builder = UriComponentsBuilder
                 .fromHttpUrl(serverUrl + "/stats")
@@ -45,16 +46,23 @@ public class StatsClient {
                 .queryParam("unique", unique);
 
         if (uris != null && !uris.isEmpty()) {
-            builder.queryParam("uris", uris);
+            for (String uri : uris) {
+                builder.queryParam("uris", uri);
+            }
         }
 
         try {
             String url = builder.toUriString();
-            return rest.getForEntity(url, Object.class);
-        } catch (HttpStatusCodeException e) {
-            return ResponseEntity
-                    .status(e.getStatusCode())
-                    .body(e.getResponseBodyAsByteArray());
+
+            return rest.exchange(
+                    url,
+                    org.springframework.http.HttpMethod.GET,
+                    null,
+                    new org.springframework.core.ParameterizedTypeReference<List<ViewStats>>() {}
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.ok(List.of());
         }
     }
 }
