@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 public class NewCommentDto {
 
-    @NotBlank
+    @NotBlank(message = "не должно быть пустым")
     @Size(min = 1, max = 2000)
     private String text;
 }
