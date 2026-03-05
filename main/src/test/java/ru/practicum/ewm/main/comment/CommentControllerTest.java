@@ -110,7 +110,7 @@ class CommentControllerTest {
         doNothing().when(commentService).deleteCommentByUser(anyLong(), anyLong());
 
         mockMvc.perform(delete("/users/1/comments/1"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         verify(commentService, times(1)).deleteCommentByUser(1L, 1L);
     }
@@ -120,7 +120,7 @@ class CommentControllerTest {
         doNothing().when(commentService).deleteCommentByAdmin(anyLong());
 
         mockMvc.perform(delete("/admin/comments/1"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         verify(commentService, times(1)).deleteCommentByAdmin(1L);
     }
