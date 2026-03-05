@@ -70,16 +70,14 @@ public class CommentServiceImpl implements CommentService {
         }
 
         Comment comment = commentRepository.findByIdAndAuthorId(commentId, userId)
-                .orElseThrow(() -> new NotFoundException("Comment not found"));
-
-        if (!comment.getAuthor().getId().equals(userId)) {
-            throw new ConflictException("User with id=" + userId + " is not the author of the comment");
-        }
+                .orElseThrow(() -> new NotFoundException("Comment not found or you are not the author"));
 
         comment.setText(dto.getText());
         comment.setEdited(LocalDateTime.now());
 
-        return CommentMapper.toCommentDto(comment);
+        Comment updatedComment = commentRepository.save(comment);
+
+        return CommentMapper.toCommentDto(updatedComment);
     }
 
     @Override
@@ -92,11 +90,7 @@ public class CommentServiceImpl implements CommentService {
         }
 
         Comment comment = commentRepository.findByIdAndAuthorId(commentId, userId)
-                .orElseThrow(() -> new NotFoundException("Comment not found"));
-
-        if (!comment.getAuthor().getId().equals(userId)) {
-            throw new ConflictException("User with id=" + userId + " is not the author of the comment");
-        }
+                .orElseThrow(() -> new NotFoundException("Comment not found or you are not the author"));
 
         commentRepository.delete(comment);
     }

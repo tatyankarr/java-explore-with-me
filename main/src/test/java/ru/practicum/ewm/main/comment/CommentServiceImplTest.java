@@ -134,13 +134,14 @@ class CommentServiceImplTest {
         when(userRepository.existsById(anyLong())).thenReturn(true);
         when(commentRepository.findByIdAndAuthorId(anyLong(), anyLong()))
                 .thenReturn(Optional.of(comment));
+        when(commentRepository.save(any(Comment.class))).thenReturn(comment);
 
         CommentDto result = commentService.updateComment(1L, 1L, newCommentDto);
 
         assertNotNull(result);
         assertEquals(newCommentDto.getText(), comment.getText());
         assertNotNull(comment.getEdited());
-        verify(commentRepository, never()).save(any(Comment.class));
+        verify(commentRepository, times(1)).save(any(Comment.class));
     }
 
     @Test
@@ -163,22 +164,22 @@ class CommentServiceImplTest {
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> commentService.updateComment(1L, 999L, newCommentDto));
 
-        assertEquals("Comment not found", exception.getMessage());
+        assertEquals("Comment not found or you are not the author", exception.getMessage());
     }
 
     @Test
-    void updateComment_WhenUserIsNotAuthor_ShouldThrowConflictException() {
+    void updateComment_WhenUserIsNotAuthor_ShouldThrowNotFoundException() {
         User anotherUser = User.builder().id(2L).build();
         comment.setAuthor(anotherUser);
 
         when(userRepository.existsById(anyLong())).thenReturn(true);
         when(commentRepository.findByIdAndAuthorId(anyLong(), anyLong()))
-                .thenReturn(Optional.of(comment));
+                .thenReturn(Optional.empty());
 
-        ConflictException exception = assertThrows(ConflictException.class,
+        NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> commentService.updateComment(1L, 1L, newCommentDto));
 
-        assertEquals("User with id=1 is not the author of the comment", exception.getMessage());
+        assertEquals("Comment not found or you are not the author", exception.getMessage());
     }
 
     @Test
@@ -212,7 +213,7 @@ class CommentServiceImplTest {
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> commentService.deleteCommentByUser(1L, 999L));
 
-        assertEquals("Comment not found", exception.getMessage());
+        assertEquals("Comment not found or you are not the author", exception.getMessage());
         verify(commentRepository, never()).delete(any(Comment.class));
     }
 
